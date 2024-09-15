@@ -24,9 +24,15 @@ type TableData = {
   work_year: string;
 };
 
+type SubData = {
+  jobname: string;
+  count: number;
+};
+
 export const Dashboard = () => {
   const [yearStats, setYearStats] = useState<DataType[]>([]);
   const [data, setData] = useState<TableData[]>([]);
+  const [subTableData, setSubTableData] = useState<SubData[]>([]);
 
   const columns: TableColumnType<DataType>[] = [
     {
@@ -93,11 +99,34 @@ export const Dashboard = () => {
     getdata();
   }, []);
 
+  const handleRowClick = (record: DataType) => {
+    console.log(record);
+    const allJobs = data.filter((job) => job.work_year == record.year);
+    const jobs: Record<string, number> = {};
+    allJobs.forEach((job) => {
+      jobs[job.job_title] = (jobs[job.job_title] || 0) + 1;
+    });
+
+    const jobList = Object.entries(jobs).map(([jobname, count]) => ({
+      jobname,
+      count,
+    }));
+
+    setSubTableData(jobList);
+  };
+
   return (
     <div>
       <Header />
       <div className="max-w-6xl mx-auto mt-10">
-        <Table dataSource={yearStats} columns={columns} />;
+        <Table
+          dataSource={yearStats}
+          columns={columns}
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+          })}
+        />
+        ;
       </div>
     </div>
   );
