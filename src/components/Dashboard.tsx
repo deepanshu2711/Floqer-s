@@ -4,6 +4,17 @@ import Papa from "papaparse";
 import { TableColumnType } from "antd";
 import { Table } from "antd";
 import { Modal } from "antd";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { LineChartOutlined, TableOutlined } from "@ant-design/icons";
 
 interface DataType {
   year: string;
@@ -36,6 +47,7 @@ export const Dashboard = () => {
   const [subTableData, setSubTableData] = useState<SubData[]>([]);
   const [modal1Open, setModal1Open] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<DataType | null>(null);
+  const [viewOption, setViewOption] = useState<"Table" | "Chart">("Table");
 
   const columns: TableColumnType<DataType>[] = [
     {
@@ -94,6 +106,8 @@ export const Dashboard = () => {
     setYearStats(filteredStats);
   }, [data]);
 
+  console.log(yearStats);
+
   useEffect(() => {
     const csvUrl = "/salaries.csv";
 
@@ -130,19 +144,82 @@ export const Dashboard = () => {
     setSubTableData(jobList);
   };
 
+  const customTicks = [100000, 120000, 140000, 160000, 180000];
+
   return (
     <div>
       <Header />
       <div className="max-w-6xl mx-auto mt-10 px-[10px]">
-        <Table
-          dataSource={yearStats}
-          columns={columns}
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-          })}
-          rowClassName={"cursor-pointer"}
-          pagination={false}
-        />
+        <div className="flex items-center justify-between mb-10">
+          <p className="text-3xl font-bold text-gray-700">
+            {viewOption === "Table" ? "Table" : "Line Graph"}
+          </p>
+          <div className="flex items-center gap-2 border  justify-end max-w-fit rounded-lg bg-gray-100">
+            <TableOutlined
+              onClick={() => setViewOption("Table")}
+              className="p-4 hover:bg-white cursor-pointer rounded-lg"
+            />
+            <LineChartOutlined
+              onClick={() => setViewOption("Chart")}
+              className="p-4 hover:bg-white cursor-pointer rounded-lg"
+            />
+          </div>
+        </div>
+
+        {viewOption === "Table" && (
+          <div className="flex flex-col items-center gap-5">
+            <Table
+              dataSource={yearStats}
+              columns={columns}
+              onRow={(record) => ({
+                onClick: () => handleRowClick(record),
+              })}
+              rowClassName={"cursor-pointer"}
+              pagination={false}
+              className="w-full"
+            />
+
+            <p className="text-gray-500">click on the row for more details</p>
+          </div>
+        )}
+
+        {viewOption === "Chart" && (
+          <div className="flex flex-col gap-10 mb-10">
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart
+                data={yearStats}
+                margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="year" />
+                <YAxis domain={[90000, "auto"]} ticks={customTicks} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="avgSalary" stroke="#82ca9d" />
+              </LineChart>
+            </ResponsiveContainer>
+
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart
+                data={yearStats}
+                margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="year" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+
+                <Line
+                  type="monotone"
+                  dataKey="totalJobs"
+                  stroke="#8884d8"
+                  activeDot={{ r: 8 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
       <Modal
         title={`List of all the job titles in ${selectedRecord?.year}`}
