@@ -3,6 +3,7 @@ import { Header } from "./Header";
 import Papa from "papaparse";
 import { TableColumnType } from "antd";
 import { Table } from "antd";
+import { Modal } from "antd";
 
 interface DataType {
   year: string;
@@ -33,6 +34,8 @@ export const Dashboard = () => {
   const [yearStats, setYearStats] = useState<DataType[]>([]);
   const [data, setData] = useState<TableData[]>([]);
   const [subTableData, setSubTableData] = useState<SubData[]>([]);
+  const [modal1Open, setModal1Open] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<DataType | null>(null);
 
   const columns: TableColumnType<DataType>[] = [
     {
@@ -49,6 +52,17 @@ export const Dashboard = () => {
       title: "Average Salary ($)",
       dataIndex: "avgSalary",
       sorter: (a, b) => parseFloat(a.avgSalary) - parseFloat(b.avgSalary),
+    },
+  ];
+
+  const subColumns: TableColumnType<SubData>[] = [
+    {
+      title: "Job Name",
+      dataIndex: "jobname",
+    },
+    {
+      title: "Count",
+      dataIndex: "count",
     },
   ];
 
@@ -100,7 +114,8 @@ export const Dashboard = () => {
   }, []);
 
   const handleRowClick = (record: DataType) => {
-    console.log(record);
+    setSelectedRecord(record);
+    setModal1Open(true);
     const allJobs = data.filter((job) => job.work_year == record.year);
     const jobs: Record<string, number> = {};
     allJobs.forEach((job) => {
@@ -118,16 +133,30 @@ export const Dashboard = () => {
   return (
     <div>
       <Header />
-      <div className="max-w-6xl mx-auto mt-10">
+      <div className="max-w-6xl mx-auto mt-10 px-[10px]">
         <Table
           dataSource={yearStats}
           columns={columns}
           onRow={(record) => ({
             onClick: () => handleRowClick(record),
           })}
+          rowClassName={"cursor-pointer"}
+          pagination={false}
         />
-        ;
       </div>
+      <Modal
+        title={`List of all the job titles in ${selectedRecord?.year}`}
+        open={modal1Open}
+        onOk={() => setModal1Open(false)}
+        onCancel={() => setModal1Open(false)}
+        width={800}
+      >
+        <Table
+          dataSource={subTableData}
+          columns={subColumns}
+          pagination={{ pageSize: 5 }}
+        />
+      </Modal>
     </div>
   );
 };
